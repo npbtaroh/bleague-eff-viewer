@@ -1,0 +1,13 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+.env
+*.db
+*.db-*
+*.bak
+*.log
+logs/
+boxscore_html_*.html
+site/
