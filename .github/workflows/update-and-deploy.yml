@@ -26,6 +26,13 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+      - name: Restore SQLite database cache
+        uses: actions/cache/restore@v4
+        with:
+          path: bleague_data.db
+          key: bleague-db-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            bleague-db-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -36,6 +43,11 @@ jobs:
         run: python parse_and_save.py --daily
       - name: Export static page and JSON data
         run: python tools/build_static_data.py --db bleague_data.db --out site
+      - name: Save refreshed SQLite database cache
+        uses: actions/cache/save@v4
+        with:
+          path: bleague_data.db
+          key: bleague-db-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact
