@@ -1,0 +1,47 @@
+name: Update B.LEAGUE data and publish
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 毎朝6時17分（日本時間）
+    - cron: "17 21 * * *"
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install parser dependency
+        run: python -m pip install -r requirements.txt
+      - name: Fetch and refresh game data
+        run: python parse_and_save.py --daily
+      - name: Export static page and JSON data
+        run: python tools/build_static_data.py --db bleague_data.db --out site
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Publish site
+        id: deployment
+        uses: actions/deploy-pages@v4
