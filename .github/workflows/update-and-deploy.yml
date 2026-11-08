@@ -3,8 +3,8 @@ name: Update B.LEAGUE data and publish
 on:
   workflow_dispatch:
   schedule:
-    # 毎朝6時17分（日本時間）
-    - cron: "17 21 * * *"
+    # 毎朝0時17分（日本時間）
+    - cron: "17 15 * * *"
   push:
     branches: [main]
 
