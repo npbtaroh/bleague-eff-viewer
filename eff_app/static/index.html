@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102337">
+  <title>B.LEAGUE EFFランキング</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="B.LEAGUE EFFランキング ホーム">
+      <span class="brand-mark" aria-hidden="true">B</span>
+      <span class="brand-name">B.LEAGUE <span>DATA</span></span>
+    </a>
+    <span class="local-label"><span class="local-dot" aria-hidden="true"></span>GitHub Pagesで公開中</span>
+  </header>
+
+  <main class="page-shell">
+    <section class="intro">
+      <p class="eyebrow">PLAYER PERFORMANCE</p>
+      <h1>EFFランキング</h1>
+      <p class="intro-copy">試合日ごとの活躍や、今シーズンの平均をチェック。</p>
+    </section>
+
+    <section class="filters" aria-label="ランキング条件">
+      <label class="field">
+        <span>集計期間</span>
+        <select id="date-select" disabled><option>読み込み中…</option></select>
+      </label>
+      <label class="field">
+        <span>リーグ</span>
+        <select id="league-select" disabled><option value="all">全リーグ</option></select>
+      </label>
+      <div class="filter-note">TOTAL EFF · 選手のEFF値で表示</div>
+    </section>
+
+    <div id="status" class="status" role="status" aria-live="polite">データを読み込んでいます…</div>
+    <p id="today-scope-note" class="position-note today-scope-note" hidden>本日対象は、今日の対戦チームのうち今季出場記録がある選手です（公式ロスターではありません）。</p>
+
+    <section id="results" hidden>
+      <div class="summary-line">
+        <div id="selected-caption" class="selected-caption"></div>
+        <div id="game-count" class="game-count"></div>
+      </div>
+
+      <section id="prediction-block" class="section-block prediction-block" aria-labelledby="prediction-heading" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">PREGAME PICK · RESULT</p>
+            <h2 id="prediction-heading">ベスト5と結果</h2>
+          </div>
+          <div id="prediction-total" class="lineup-total"></div>
+        </div>
+        <p class="lineup-description">試合前までのシーズン平均EFFで選び、当日のEFF・勝敗・スコアを並べています。</p>
+        <div id="prediction-grid" class="lineup-grid"></div>
+        <div id="prediction-empty" class="empty-state" hidden>この日より前の出場記録だけでは、5つのポジションを埋められません。</div>
+      </section>
+
+      <section class="section-block lineup-block" aria-labelledby="lineup-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">BEST FIVE · RAW EFF</p>
+            <h2 id="lineup-heading">EFF合計が最大になる5人</h2>
+          </div>
+          <div id="lineup-total" class="lineup-total"></div>
+        </div>
+        <p class="lineup-description">ポジションを兼ねる選手も考慮し、同じ選手を重複させずに配置しています。</p>
+        <div id="lineup-grid" class="lineup-grid"></div>
+        <div id="lineup-empty" class="empty-state" hidden>5つのポジションすべてを埋められる選手がいません。</div>
+      </section>
+
+      <details id="matchups-block" class="section-block matchups-block" hidden>
+        <summary id="matchups-heading">本日の全対戦と今季成績を見る</summary>
+        <div id="matchups-grid" class="matchups-grid"></div>
+      </details>
+
+      <section class="section-block" aria-labelledby="overall-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">TOP PERFORMERS</p>
+            <h2 id="overall-heading">全体トップ10</h2>
+          </div>
+          <span class="section-unit"><a id="official-season-link" class="official-season-link" href="https://www.bleague.jp/stats/?year=2026&amp;tab=1&amp;target=player-b1&amp;value=EFFPG&amp;o=desc&amp;e=2&amp;dt=avg" target="_blank" rel="noopener noreferrer">公式平均EFF ↗</a></span>
+        </div>
+        <div class="overall-table-wrap">
+          <table class="overall-table">
+            <thead><tr><th>順位</th><th>選手</th><th id="team-context-heading">チーム・対戦</th><th class="mobile-detail">ポジション</th><th class="numeric">EFF</th><th class="numeric">得点</th><th class="numeric">リバウンド</th><th class="numeric">アシスト</th><th class="numeric mobile-hide">出場時間</th><th id="games-played-heading" class="numeric mobile-hide games-played-column">出場試合</th></tr></thead>
+            <tbody id="overall-body"></tbody>
+          </table>
+        </div>
+        <div id="overall-empty" class="empty-state" hidden>この条件の選手データはありません。</div>
+        <p id="season-average-note" class="position-note" hidden>シーズン平均EFF・得点・リバウンド・アシスト・出場時間は、公式のシーズン合計を出場試合数で割っています。公式集計更新日：<span id="official-updated-at">—</span></p>
+      </section>
+
+      <section class="section-block positions-block" aria-labelledby="positions-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">POSITION LEADERS</p>
+            <h2 id="positions-heading">ポジション別トップ5</h2>
+          </div>
+        </div>
+        <div id="position-grid" class="position-grid"></div>
+        <p class="position-note">ポジション未登録の選手は全体ランキングに含み、ポジション別には表示していません。</p>
+      </section>
+    </section>
+
+    <footer class="footer">公式試合データ・シーズン集計をGitHub Actionsで更新しています。<br>データ更新：<span id="data-updated-at">—</span></footer>
+  </main>
+  <script src="./app.js" defer></script>
+</body>
+</html>
