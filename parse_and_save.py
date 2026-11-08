@@ -644,6 +644,7 @@ def get_daily_checkpoint():
     """Read the last fully checked date, initializing from existing game data."""
     conn = sqlite3.connect(DB_PATH)
     try:
+        create_schema(conn)
         with conn:
             conn.execute("""CREATE TABLE IF NOT EXISTS daily_ingest_state (
                 state_key TEXT PRIMARY KEY, state_value TEXT NOT NULL, updated_at TEXT NOT NULL
