@@ -8,6 +8,7 @@ const positionGrid = document.querySelector("#position-grid");
 const lineupGrid = document.querySelector("#lineup-grid");
 const lineupTotal = document.querySelector("#lineup-total");
 const lineupHeading = document.querySelector("#lineup-heading");
+const lineupDescription = document.querySelector("#lineup-description");
 const lineupEmpty = document.querySelector("#lineup-empty");
 const selectedCaption = document.querySelector("#selected-caption");
 const gameCount = document.querySelector("#game-count");
@@ -21,6 +22,7 @@ const predictionBlock = document.querySelector("#prediction-block");
 const predictionGrid = document.querySelector("#prediction-grid");
 const predictionTotal = document.querySelector("#prediction-total");
 const predictionEmpty = document.querySelector("#prediction-empty");
+const predictionDescription = document.querySelector("#prediction-description");
 const teamContextHeading = document.querySelector("#team-context-heading");
 const gamesPlayedHeading = document.querySelector("#games-played-heading");
 const officialSeasonLink = document.querySelector("#official-season-link");
@@ -176,12 +178,12 @@ function addPositionCard(role, players) {
   return card;
 }
 
-function addLineupSlot(player) {
+function addLineupSlot(player, effLabel = "EFF") {
   const slot = element("div", "lineup-slot");
   slot.append(element("div", "lineup-role", `配置: ${player.role}`));
   slot.append(element("strong", "lineup-player", player.player_name || "名前不明"));
   addTeamContext(slot, player.team_name, player.league, player.matchup);
-  slot.append(element("span", "lineup-eff", `EFF ${formatMetric(player.efficiency)}`));
+  slot.append(element("span", "lineup-eff", `${effLabel} ${formatMetric(player.efficiency)}`));
   return slot;
 }
 
@@ -228,6 +230,10 @@ function render(payload) {
     ? `本日 ${payload.game_count}試合`
     : payload.scope === "season" ? `対象 ${payload.game_count}試合` : `${payload.game_count}試合`;
   seasonAverageNote.hidden = !["season", "today"].includes(payload.scope);
+  predictionDescription.textContent = "試合前までの各試合スタッツからEFFを算出して選び、当日の実績と比較しています。";
+  lineupDescription.textContent = ["season", "today"].includes(payload.scope)
+    ? "公式シーズン集計の平均EFFで選出。試合前予測とは集計元・算出基準が異なるため、同じ選手でも値が異なる場合があります。"
+    : "ポジションを兼ねる選手も考慮し、同じ選手を重複させずに配置しています。";
   todayScopeNote.hidden = payload.scope !== "today";
   teamContextHeading.textContent = payload.scope === "season" ? "チーム" : "チーム・対戦";
   document.body.classList.toggle("daily-mode", payload.scope === "daily");
@@ -264,7 +270,8 @@ function render(payload) {
   if (payload.best_lineup) {
     lineupTotal.replaceChildren(document.createTextNode(payload.scope === "season" ? "5人の平均EFF合計" : "5人のEFF合計"));
     lineupTotal.append(element("strong", "", formatMetric(payload.best_lineup.efficiency_total)));
-    lineupGrid.replaceChildren(...payload.best_lineup.players.map(addLineupSlot));
+    const lineupEffLabel = ["season", "today"].includes(payload.scope) ? "公式平均EFF" : "EFF";
+    lineupGrid.replaceChildren(...payload.best_lineup.players.map(player => addLineupSlot(player, lineupEffLabel)));
     lineupGrid.hidden = false;
     lineupTotal.hidden = false;
     lineupEmpty.hidden = true;
