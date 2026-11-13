@@ -408,7 +408,7 @@ def historical_prediction_candidates(path: Path, game_date: str, league: str,
     with closing(connect_db(path)) as con:
         if participating_teams is None:
             scheduled = con.execute(
-                "SELECT league,home_team_name,away_team_name FROM games WHERE game_date=?" + league_sql,
+                "SELECT league,home_team_name,away_team_name FROM games AS g WHERE game_date=?" + league_sql,
                 [game_date] + ([league] if league != "all" else []),
             ).fetchall()
             participating = {(row[0], row[1]) for row in scheduled} | {(row[0], row[2]) for row in scheduled}
@@ -642,9 +642,10 @@ def get_rankings(path: Path, game_date: str, league: str) -> dict:
             if today_mode:
                 game_count = len(selected_today_games)
             else:
+                game_count_league_clause = " AND g.league = ?" if league != "all" else ""
                 game_count = con.execute(f"""
                     SELECT COUNT(*) FROM games AS g
-                    WHERE g.game_date >= ? AND g.game_date < ?{league_clause}
+                    WHERE g.game_date >= ? AND g.game_date < ?{game_count_league_clause}
                 """, [f"{season_year}-07-01", f"{season_year + 1}-07-01"]
                      + ([league] if league != "all" else [])).fetchone()[0]
             season_updated_at = con.execute(
@@ -664,9 +665,10 @@ def get_rankings(path: Path, game_date: str, league: str) -> dict:
                   AND g.game_date = ?{league_clause}
                 ORDER BY p.efficiency DESC, p.player_name COLLATE NOCASE, g.schedule_key
             """, params).fetchall()
+            game_count_league_clause = " AND g.league = ?" if league != "all" else ""
             game_count = con.execute(f"""
                 SELECT COUNT(*) FROM games AS g
-                WHERE g.game_date = ?{league_clause}
+                WHERE g.game_date = ?{game_count_league_clause}
             """, params).fetchone()[0]
     players = []
     for row in rows:
