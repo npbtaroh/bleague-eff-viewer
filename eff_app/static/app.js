@@ -26,6 +26,11 @@ const predictionDescription = document.querySelector("#prediction-description");
 const teamContextHeading = document.querySelector("#team-context-heading");
 const gamesPlayedHeading = document.querySelector("#games-played-heading");
 const officialSeasonLink = document.querySelector("#official-season-link");
+const scoreBlock = document.querySelector("#score-block");
+const scoreTotal = document.querySelector("#score-total");
+const scoreBreakdown = document.querySelector("#score-breakdown");
+const scoreGrid = document.querySelector("#score-grid");
+const scoreEmpty = document.querySelector("#score-empty");
 const ROLE_ORDER = ["C", "PF", "SF", "SG", "PG"];
 
 function element(tag, className, text) {
@@ -230,10 +235,10 @@ function render(payload) {
     ? `本日 ${payload.game_count}試合`
     : payload.scope === "season" ? `対象 ${payload.game_count}試合` : `${payload.game_count}試合`;
   seasonAverageNote.hidden = !["season", "today"].includes(payload.scope);
-  predictionDescription.textContent = "試合前までの各試合スタッツからEFFを算出して選び、当日の実績と比較しています。";
+  predictionDescription.textContent = "試合前までの平均EFFで選んだ5人と、当日の実績。";
   lineupDescription.textContent = ["season", "today"].includes(payload.scope)
     ? "公式シーズン集計の平均EFFで選出。試合前予測とは集計元・算出基準が異なるため、同じ選手でも値が異なる場合があります。"
-    : "ポジションを兼ねる選手も考慮し、同じ選手を重複させずに配置しています。";
+    : "当日のEFF合計が最大になる5人。";
   todayScopeNote.hidden = payload.scope !== "today";
   teamContextHeading.textContent = payload.scope === "season" ? "チーム" : "チーム・対戦";
   document.body.classList.toggle("daily-mode", payload.scope === "daily");
@@ -263,8 +268,8 @@ function render(payload) {
   }
   officialUpdatedAt.textContent = formatUpdatedAt(payload.season_updated_at);
   lineupHeading.textContent = ["season", "today"].includes(payload.scope)
-    ? "平均EFF合計が最大になる5人"
-    : "EFF合計が最大になる5人";
+    ? "シーズン平均ベスト5"
+    : "当日のベスト5";
   overallBody.replaceChildren(...payload.overall.map(addOverallRow));
   overallEmpty.hidden = payload.overall.length !== 0;
   if (payload.best_lineup) {
@@ -280,6 +285,23 @@ function render(payload) {
     lineupGrid.hidden = true;
     lineupTotal.hidden = true;
     lineupEmpty.hidden = false;
+  }
+  scoreBlock.hidden = payload.scope !== "daily";
+  const score = payload.score_lineup;
+  scoreGrid.replaceChildren();
+  scoreTotal.replaceChildren();
+  scoreBreakdown.textContent = "";
+  scoreEmpty.hidden = true;
+  if (payload.scope === "daily") {
+    if (score) {
+      scoreTotal.append(document.createTextNode("5人のスコア合計"),
+        element("strong", "", String(score.score_total)));
+      scoreBreakdown.textContent = `EFF合計 ${formatMetric(score.efficiency_total)} ×（1 ＋ 勝利 ${score.win_bonus_percent}% ＋ 同チーム ${score.same_team_bonus_percent}%）＝ ${score.score_total} · 勝利チーム所属 ${score.winning_players}人／同チーム最大 ${score.largest_team_count}人`;
+      scoreGrid.replaceChildren(...score.players.map(player => addLineupSlot(player)));
+    } else {
+      scoreEmpty.textContent = "試合結果が未確定、または5つのポジションを埋められないため、スコアを算出できません。";
+      scoreEmpty.hidden = false;
+    }
   }
   positionGrid.replaceChildren(...ROLE_ORDER.map(role => addPositionCard(role, payload.by_position[role] || [])));
   statusBox.hidden = true;

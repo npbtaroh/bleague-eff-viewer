@@ -221,6 +221,76 @@ def optimize_lineup(players: list[dict]) -> dict | None:
     }
 
 
+SAME_TEAM_BONUS = {0: 0, 1: 0, 2: 1, 3: 3, 4: 5, 5: 10}
+
+
+def optimize_score_lineup(players: list[dict]) -> dict | None:
+    """Exactly maximize total EFF times the additive lineup bonus multiplier."""
+    teams: dict[tuple[str, str], list[dict]] = {}
+    seen: set[str] = set()
+    for player in players:
+        player_id = str(player["player_id"])
+        if player_id in seen or not set((player.get("position") or "").split("/")) & set(ROLES):
+            continue
+        seen.add(player_id)
+        if not player.get("team_name") or (player.get("matchup") or {}).get("result_mark") not in {"○", "×"}:
+            return None  # A final score requires confirmed game results.
+        teams.setdefault((player["league"], player["team_name"]), []).append(player)
+
+    # Build each team's best distinct-player assignment for every position mask
+    # and winner count, then combine disjoint masks across teams. Keeping the
+    # largest team size preserves exactly the information the team bonus needs.
+    states = {(0, 0, 0): (0.0, [None] * len(ROLES))}
+    for team_players in teams.values():
+        team_states = {(0, 0): (0.0, [None] * len(ROLES))}
+        for player in team_players:
+            updated = dict(team_states)
+            won = int(player["matchup"]["result_mark"] == "○")
+            eligible = (player.get("position") or "").split("/")
+            for (mask, wins), (eff, assignment) in team_states.items():
+                for index, role in enumerate(ROLES):
+                    bit = 1 << index
+                    if mask & bit or role not in eligible:
+                        continue
+                    key = (mask | bit, wins + won)
+                    total = eff + float(player["efficiency"])
+                    if key not in updated or total > updated[key][0]:
+                        chosen = assignment.copy()
+                        chosen[index] = player
+                        updated[key] = (total, chosen)
+            team_states = updated
+        combined = dict(states)
+        for (mask, wins, largest), (eff, assignment) in states.items():
+            for (team_mask, team_wins), (team_eff, team_assignment) in team_states.items():
+                if not team_mask or mask & team_mask:
+                    continue
+                key = (mask | team_mask, wins + team_wins, max(largest, team_mask.bit_count()))
+                total = eff + team_eff
+                if key not in combined or total > combined[key][0]:
+                    chosen = [team_assignment[i] or assignment[i] for i in range(len(ROLES))]
+                    combined[key] = (total, chosen)
+        states = combined
+    full_mask = (1 << len(ROLES)) - 1
+    candidates = []
+    for (mask, wins, largest), (eff, assignment) in states.items():
+        if mask == full_mask:
+            percent = wins * 10 + SAME_TEAM_BONUS[largest]
+            candidates.append((eff * (100 + percent) / 100, eff, wins, largest, assignment))
+    if not candidates:
+        return None
+    score, eff, wins, largest, assignment = max(candidates, key=lambda item: (item[0], item[1]))
+    return {
+        "score_total": round(score, 2),
+        "efficiency_total": round(eff, 1),
+        "winning_players": wins,
+        "win_bonus_percent": wins * 10,
+        "same_team_bonus_percent": SAME_TEAM_BONUS[largest],
+        "largest_team_count": largest,
+        "bonus_percent": wins * 10 + SAME_TEAM_BONUS[largest],
+        "players": [{**assignment[i], "role": role} for i, role in enumerate(ROLES)],
+    }
+
+
 def get_official_team_aliases(path: Path, season_year: int) -> dict[tuple[str, str], str]:
     """Map full game names to the official short names used in season statistics."""
     cache_key = (str(path), season_year)
@@ -733,6 +803,7 @@ def get_rankings(path: Path, game_date: str, league: str) -> dict:
         "overall": players[:10],
         "best_lineup": optimize_lineup(players),
         "prediction_lineup": prediction_lineup,
+        "score_lineup": optimize_score_lineup(players) if not season_mode else None,
         "matchups": today_matchups,
         "by_position": {role: by_position[role][:5] for role in ROLES},
         "season_updated_at": season_updated_at if season_mode else None,
