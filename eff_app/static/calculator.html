@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>スコア計算機 | B.LEAGUE</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <section class="intro"><h1>スコア計算機</h1><a class="official-season-link" href="./">ランキングへ戻る</a></section>
+    <p class="calculator-intro">仮の5人で、EFF・カード・勝敗・チームを変えてスコアを比較できます。</p>
+    <form id="calculator-form">
+      <div class="calculator-options">
+        <label><input id="enable-card" type="checkbox" checked>カードボーナス</label>
+        <label><input id="enable-win" type="checkbox" checked>勝利ボーナス</label>
+        <label><input id="enable-team" type="checkbox" checked>同チームボーナス</label>
+        <button type="reset" class="calculator-reset">初期値に戻す</button>
+      </div>
+      <div id="calculator-slots"></div>
+      <p class="position-note">同じチームの勝敗は連動します。A〜Eは仮のチーム名です。</p>
+    </form>
+    <p id="calculator-error" class="status error" role="alert" hidden>5枠すべてに有効なEFFを入力してください。</p>
+    <section id="calculator-result" class="section-block calculator-result" aria-labelledby="calc-heading">
+      <div class="section-heading"><h2 id="calc-heading">計算結果</h2><div class="lineup-total">最終スコア<strong id="calc-total" aria-live="polite">150</strong></div></div>
+      <dl class="calculator-breakdown">
+        <div><dt>EFF合計</dt><dd id="calc-raw"></dd></div>
+        <div><dt>カード反映後の合計</dt><dd id="calc-card-total"></dd></div>
+        <div><dt>勝利ボーナス</dt><dd id="calc-win"></dd></div>
+        <div><dt>同チームボーナス</dt><dd id="calc-team"></dd></div>
+      </dl>
+      <p id="calc-formula" class="calculator-formula"></p>
+      <details class="calculator-rules"><summary>計算ルール</summary>
+        <p>各選手のEFFにカード倍率を掛けて合計し、その合計に勝利・同チームボーナスを加算した倍率を掛けます。途中では丸めず、表示は小数点以下2桁までです。</p>
+        <p>カード：★・★★は2倍、★★★は2.3倍、★★★★は2.5倍、★★★★★は3倍。</p>
+        <p>勝利：勝利チーム所属1人につき+10%。同チーム：2人+1%、3人+3%、4人+5%、5人+10%。最大の組み合わせだけ適用します。</p>
+      </details>
+    </section>
+  </main>
+  <script src="./calculator.js" defer></script>
+</body>
+</html>

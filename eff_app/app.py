@@ -26,6 +26,8 @@ DEFAULT_DB = Path.home() / "Documents" / "python" / "bleague_analytics" / "bleag
 STATIC_FILES = {
     "/": STATIC_DIR / "index.html",
     "/styles.css": STATIC_DIR / "styles.css",
+    "/calculator.html": STATIC_DIR / "calculator.html",
+    "/calculator.js": STATIC_DIR / "calculator.js",
     "/app.js": STATIC_DIR / "app.js",
 }
 ROLES = ("C", "PF", "SF", "SG", "PG")

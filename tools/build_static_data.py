@@ -38,7 +38,7 @@ def main() -> int:
     app = load_app()
     out_dir.mkdir(parents=True, exist_ok=True)
     static_dir = ROOT / "eff_app" / "static"
-    for asset in ("index.html", "app.js", "styles.css"):
+    for asset in ("index.html", "app.js", "styles.css", "calculator.html", "calculator.js"):
         shutil.copy2(static_dir / asset, out_dir / asset)
 
     dates = app.get_dates(db_path)
